@@ -1,0 +1,47 @@
+import cv2 as cv
+import sys
+import matplotlib.pyplot as plt
+
+
+src = "C:/Users/nito_/Desktop/zf.jpg"
+if src is None:
+    sys.exit("Failure in opening image.")
+
+# Open image in CV format, turn into grayscale
+cv_image = cv.imread(src)
+#cv_image_invert = cv.bitwise_not(cv_image)
+#img = cv.cvtColor(cv_image_invert, cv.COLOR_BGR2GRAY)
+img = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
+
+
+# Calculate edges with canny edge detector
+threshold = 100
+
+canny_output = cv.Canny(img, threshold, threshold * 2)
+contours, _ = cv.findContours(canny_output, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+
+# Create contour-value-container and assign values for detected contours
+contours_poly = [0]*len(contours)
+boundRect = [0]*len(contours)
+for i, c in enumerate(contours):
+    contours_poly[i] = cv.approxPolyDP(c, 3, True)
+    boundRect[i] = cv.boundingRect(contours_poly[i])
+    
+    
+edit_image = img.copy()
+
+# Draw contours
+for i in range(len(contours)):
+        color = (0, 0, 0)
+        cv.drawContours(edit_image, contours_poly, i, color, thickness = 2)
+        cv.rectangle(edit_image, (int(boundRect[i][0]), int(boundRect[i][1])), \
+          (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])), color, 5)
+
+
+cv.imshow("Image with added contours", edit_image)
+
+
+# Falls ausgegebene Datei nicht auf Bildschirm passt:
+# plt.figure(figsize=(20, 20))
+# plt.imshow(edited_image, "gray")

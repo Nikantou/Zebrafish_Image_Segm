@@ -1,0 +1,44 @@
+import cv2 as cv
+import sys
+import matplotlib.pyplot as plt
+
+src = "C:/Users/nito_/Desktop/zf.jpg"
+
+
+
+def image_rect(source, threshold, line_thickness, inversion = True, show_as_plot = True):
+    """
+    Given an image file, this function aims to calculate bounding rectangles and.
+    This is performed on either a greyscale copy of the original file, or an inverted-color copy.
+    Thickness of marking lines can be assigned.
+    """
+    cv_image = cv.imread(source)
+    if source is None:
+        sys.exit("Failure in opening image.")
+    if inversion == True:
+        cv_image_invert = cv.bitwise_not(cv_image)
+        img = cv.cvtColor(cv_image_invert, cv.COLOR_BGR2GRAY)
+    else:
+        img = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
+    
+    canny_output = cv.Canny(img, threshold, threshold * 2)
+    contours, _ = cv.findContours(canny_output, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    
+    contours_poly = [0]*len(contours)
+    boundRect = [0]*len(contours)
+    for i, c in enumerate(contours):
+        contours_poly[i] = cv.approxPolyDP(c, 3, True)
+        boundRect[i] = cv.boundingRect(contours_poly[i])
+        
+    edit_image = img.copy()
+    
+    for i in range(len(contours)):
+        color = (0, 0, 0)
+        cv.drawContours(edit_image, contours_poly, i, color, thickness = line_thickness)
+        cv.rectangle(edit_image, (int(boundRect[i][0]), int(boundRect[i][1])), \
+          (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])), color, line_thickness)
+    
+    if show_as_plot == True:
+        return plt.figure(figsize=(20, 20)), plt.imshow(edit_image, "gray")
+    else:
+        return cv.imshow("Image with added contours", edit_image)
